@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}All Products - Soko Hub{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"> All Products</h1>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    {# Simple Sorting #}
+    <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Sort By: 
+            {% if current_sort == 'price_asc' %}Price (Low to High)
+            {% elif current_sort == 'price_desc' %}Price (High to Low)
+            {% else %}Newest First
+            {% endif %}
+        </button>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{% url 'product_list' %}?sort=-created_at">Newest First</a></li>
+            <li><a class="dropdown-item" href="{% url 'product_list' %}?sort=price_asc">Price (Low to High)</a></li>
+            <li><a class="dropdown-item" href="{% url 'product_list' %}?sort=price_desc">Price (High to Low)</a></li>
+        </ul>
+    </div>
+    {# Shows product count (optional but helpful) #}
+    <p class="text-muted mb-0">Showing {{ products.start_index }} - {{ products.end_index }} of {{ products.paginator.count }} items</p>
+</div>
+
+
+{% if products %}
+    {# 2. Products displayed in responsive grid #}
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mb-5">
+        {% for product in products %}
+        <div class="col">
+            {# 4. Click on card navigates to product detail page (using link on image/name) #}
+            <div class="card h-100 shadow-sm {% if product.stock <= 0 %}border-danger{% endif %}">
+                <a href="{% url 'product_detail' product.id %}">
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                    <div class="bg-secondary text-white text-center d-flex align-items-center justify-content-center" style="height: 200px;">
+                        [No Image]
+                    </div>
+                    {% endif %}
+                </a>
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">
+                        <a href="{% url 'product_detail' product.id %}" class="text-decoration-none text-dark">{{ product.name }}</a>
+                    </h5>
+                    {# 3. Each card shows: price, vendor name, stock status #}
+                    <p class="card-text text-muted small">By {{ product.vendor.username|title }}</p>
+                    <p class="card-text fs-4 fw-bold text-success mt-1">${{ product.price|floatformat:2 }}</p>
+                    
+                    <div class="mt-auto">
+                        {% if product.stock <= 0 %}
+                            {# 4. Out-of-stock items clearly marked and "Buy Now" disabled #}
+                            <span class="badge bg-danger mb-2">OUT OF STOCK</span>
+                            <button class="btn btn-danger w-100" disabled>Buy Now</button>
+                        {% else %}
+                            <span class="badge bg-success mb-2">In Stock ({{ product.stock }})</span>
+                            <a href="{% url 'product_detail' product.id %}" class="btn btn-primary w-100">Buy Now</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {# Pagination #}
+    <nav aria-label="Product Page Navigation">
+        <ul class="pagination justify-content-center">
+            {% if products.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ products.previous_page_number }}&sort={{ current_sort }}">Previous</a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Previous</span></li>
+            {% endif %}
+
+            {% for i in products.paginator.page_range %}
+                {% if products.number == i %}
+                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                {% else %}
+                    <li class="page-item"><a class="page-link" href="?page={{ i }}&sort={{ current_sort }}">{{ i }}</a></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if products.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ products.next_page_number }}&sort={{ current_sort }}">Next</a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Next</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+
+{% else %}
+    {# 5. Shows "No products available" if empty #}
+    <div class="alert alert-warning text-center mt-5" role="alert">
+        Sorry, there are currently no active products available for browsing.
+    </div>
+{% endif %}
+{% endblock %}

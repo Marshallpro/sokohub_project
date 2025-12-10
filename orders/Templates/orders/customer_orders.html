@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Orders{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">📋 My Order History</h1>
+
+{# 7. Shows "No orders yet" if empty #}
+{% if orders %}
+<div class="table-responsive">
+    <table class="table table-hover table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th scope="col">Order #</th>
+                <th scope="col">Date Placed</th>
+                <th scope="col">Total</th>
+                <th scope="col">Status</th>
+                <th scope="col">Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                {# 4. Each order displays: order number #}
+                <td><strong>{{ order.id }}</strong></td>
+                {# 4. date #}
+                <td>{{ order.created_at|date:"M d, Y H:i" }}</td>
+                {# 4. total #}
+                <td>${{ order.total|floatformat:2 }}</td>
+                {# 5. Status badge color-coded #}
+                <td>
+                    {% if order.status == 'pending' %}
+                        <span class="badge bg-warning text-dark">{{ order.status|title }}</span>
+                    {% elif order.status == 'completed' %}
+                        <span class="badge bg-success">{{ order.status|title }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ order.status|title }}</span>
+                    {% endif %}
+                </td>
+                {# 4. Click order number to view details #}
+                <td>
+                    <a href="{% url 'order_confirmation' order.id %}" class="btn btn-sm btn-outline-info">View</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% else %}
+<div class="alert alert-info text-center mt-5" role="alert">
+    You haven't placed any orders yet. 
+</div>
+{% endif %}
+
+{# 8. "Continue Shopping" button #}
+<a href="{% url 'product_list' %}" class="btn btn-primary mt-4">Continue Shopping</a>
+{% endblock %}
