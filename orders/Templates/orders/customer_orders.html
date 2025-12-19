@@ -4,7 +4,7 @@
 {% block title %}My Orders{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">📋 My Order History</h1>
+<h1 class="mb-4"> My Order History</h1>
 
 {# 7. Shows "No orders yet" if empty #}
 {% if orders %}
@@ -55,5 +55,5 @@
 {% endif %}
 
 {# 8. "Continue Shopping" button #}
-<a href="{% url 'product_list' %}" class="btn btn-primary mt-4">Continue Shopping</a>
+<a href="{% url 'home' %}" class="btn btn-primary mt-4">Continue Shopping</a>
 {% endblock %}

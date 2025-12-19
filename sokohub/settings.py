@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'products',
     'orders',
     'accounts',
+    'payments',
     
 ]
 
@@ -139,3 +140,19 @@ LOGOUT_REDIRECT_URL = 'home'
 
 
 AUTH_USER_MODEL = 'accounts.User'
+
+USE_REAL_EMAIL = True   # Set False to only print emails in console
+
+if USE_REAL_EMAIL:
+    # Production / real email sending (SMTP)
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.gmail.com'             # Change if using another SMTP provider
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = 'marshallirem55@gmail.com'        # Replace with your email
+    EMAIL_HOST_PASSWORD = 'rxct uwhp jrek isgd'  # Replace with app password (Gmail 2FA)
+    DEFAULT_FROM_EMAIL = 'Soko Hub <noreply@sokohub.com>'
+#else:
+    # Development: print emails to console
+   # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    #DEFAULT_FROM_EMAIL = 'Soko Hub <noreply@sokohub.com>'

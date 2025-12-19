@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}MTN MoMo Payment{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3>Pay with MTN MoMo</h3>
+  <p>Order Total: <strong>{{ order.total }} RWF</strong></p>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label>MTN Phone Number</label>
+      <input type="text" name="phone" class="form-control" placeholder="078xxxxxxx" required>
+    </div>
+    <button class="btn btn-warning w-100">Pay Now</button>
+  </form>
+</div>
+{% endblock %}

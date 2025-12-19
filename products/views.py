@@ -1,12 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from accounts.decorators import vendor_required, customer_required
-from .models import Product
+from accounts.decorators import vendor_required
+from .models import Product, ProductImage
 from orders.models import OrderItem 
-from django.db.models import Sum, Count, F
 from .forms import ProductForm
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib import messages 
+from django.db.models import Q
 
 
 
@@ -40,19 +39,28 @@ def vendor_dashboard(request):
 @vendor_required
 def add_product(request):
     if request.method == 'POST':
-        form = ProductForm(request.POST, request.FILES)
-        if form.is_valid():
-            product = form.save(commit=False)
+        product_form = ProductForm(request.POST)
+        files = request.FILES.getlist('images')  # match the input name in template
+
+        if product_form.is_valid():
+            # Save the main product
+            product = product_form.save(commit=False)
             product.vendor = request.user
-            product.status = 'active' 
+            product.status = 'active'
             product.save()
-            messages.success(request, f"Product '{product.name}' created and listed successfully!")
+
+            # Save all uploaded images
+            for f in files:
+                ProductImage.objects.create(product=product, image=f)
+
+            messages.success(request, f"Product '{product.name}' created successfully with {len(files)} images!")
             return redirect('vendor_products')
-        
     else:
-        form = ProductForm()
-        
-    context = {'form': form}
+        product_form = ProductForm()
+    
+    context = {
+        'form': product_form
+    }
     return render(request, 'products/add_product.html', context)
 
 @vendor_required
@@ -67,32 +75,41 @@ def vendor_products(request):
     }
     return render(request, 'products/vendor_products_list.html', context)
 
-@login_required 
+#@login_required 
 def product_list(request):
+    query = request.GET.get('q', '')  # Get search query
     products_list = Product.objects.filter(status='active')
-    sort_by = request.GET.get('sort', '-created_at') 
 
+    # Filter by search query if provided
+    if query:
+        products_list = products_list.filter(
+            Q(name__icontains=query) | Q(description__icontains=query)
+        )
+
+    # Sorting
+    sort_by = request.GET.get('sort', '-created_at')
     if sort_by == 'price_asc':
         products_list = products_list.order_by('price')
     elif sort_by == 'price_desc':
         products_list = products_list.order_by('-price')
     else:
-        products_list = products_list.order_by('-created_at') 
+        products_list = products_list.order_by('-created_at')
 
-    
+    # Pagination
     paginator = Paginator(products_list, 12)
     page_number = request.GET.get('page')
-    
+
     try:
         products = paginator.page(page_number)
     except PageNotAnInteger:
         products = paginator.page(1)
     except EmptyPage:
         products = paginator.page(paginator.num_pages)
-        
+
     context = {
         'products': products,
-        'current_sort': sort_by, 
+        'current_sort': sort_by,
+        'query': query,
     }
     return render(request, 'products/product_list.html', context)
 
@@ -112,8 +129,37 @@ def product_detail(request, pk):
 
 
 def home(request):
-    """Public home view."""
-    return render(request, 'accounts/home.html', {'title': 'Home'})
+    # Fetch all active products
+    products_list = Product.objects.filter(status='active')
+    
+    # Handle sorting
+    sort_by = request.GET.get('sort', '-created_at')
+    if sort_by == 'price_asc':
+        products_list = products_list.order_by('price')
+    elif sort_by == 'price_desc':
+        products_list = products_list.order_by('-price')
+    else:
+        products_list = products_list.order_by('-created_at')
+
+    # Pagination
+    paginator = Paginator(products_list, 12)
+    page_number = request.GET.get('page')
+    try:
+        products = paginator.page(page_number)
+    except PageNotAnInteger:
+        products = paginator.page(1)
+    except EmptyPage:
+        products = paginator.page(paginator.num_pages)
+
+    context = {
+        'products': products,
+        'current_sort': sort_by,
+        'title': 'Home',
+    }
+
+    print(f"DEBUG: {products_list.count()} active products")  # Check in console
+    return render(request, 'products/product_list.html', context)
+
 
 @vendor_required
 def edit_product(request, pk):  
