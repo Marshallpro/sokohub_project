@@ -27,11 +27,7 @@ SECRET_KEY = 'django-insecure-s+@3y0igkhc4q$#i3+fq&!84$)lplv!uj^a)i9s=7yj#d3d3_4
 DEBUG = False
 
 ALLOWED_HOSTS = [
-    'sokohub-project-1.onrender.com',
-    'sokohubmini_market.com',
-    'www.sokohubmini_market.com',
-    '127.0.0.1',
-    'localhost',
+    '*',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
