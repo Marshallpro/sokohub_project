@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-s+@3y0igkhc4q$#i3+fq&!84$)lplv!uj^a)i9s=7yj#d3d3_4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['sokohubmini_market.com', 'www.sokohubmini_market.com','127.0.0.1' ]
 
 
 # Application definition
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'accounts',
     'payments',
     
+    
 ]
 
 MIDDLEWARE = [
@@ -52,7 +53,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.common.BrokenLinkEmailsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 ROOT_URLCONF = 'sokohub.urls'
 
@@ -80,8 +85,12 @@ WSGI_APPLICATION = 'sokohub.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'PASSWORD': '1234',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
@@ -122,7 +131,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [
-    BASE_DIR / 'static'
+    BASE_DIR / 'media'
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
