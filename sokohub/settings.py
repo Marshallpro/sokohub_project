@@ -95,10 +95,10 @@ WSGI_APPLICATION = 'sokohub.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'PASSWORD': '1234',
-        'HOST': 'localhost',
+        'NAME': 'sokohub',
+        'USER': 'sokohub_user',
+        'PASSWORD': 'Ne7uCbEE26tDhVHSFosTBpNSIEwLmTFK',
+        'HOST': 'dpg-d60aparuibrs73dcasig-a',
         'PORT': '5432',
     }
 }
