@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -23,9 +24,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-s+@3y0igkhc4q$#i3+fq&!84$)lplv!uj^a)i9s=7yj#d3d3_4'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '*',
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://sokohub-project-1.onrender.com',
+    'https://sokohubmini_market.com',
+    'https://www.sokohubmini_market.com',
+]
 
 
 # Application definition
@@ -40,6 +49,8 @@ INSTALLED_APPS = [
     'products',
     'orders',
     'accounts',
+    'payments',
+    
     
 ]
 
@@ -51,7 +62,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.common.BrokenLinkEmailsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 ROOT_URLCONF = 'sokohub.urls'
 
@@ -79,8 +94,12 @@ WSGI_APPLICATION = 'sokohub.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'sokohub',
+        'USER': 'sokohub_user',
+        'PASSWORD': 'Ne7uCbEE26tDhVHSFosTBpNSIEwLmTFK',
+        'HOST': 'dpg-d60aparuibrs73dcasig-a',
+        'PORT': '5432',
     }
 }
 
@@ -121,7 +140,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [
-    BASE_DIR / 'static'
+    BASE_DIR / 'media'
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
@@ -139,3 +158,19 @@ LOGOUT_REDIRECT_URL = 'home'
 
 
 AUTH_USER_MODEL = 'accounts.User'
+
+USE_REAL_EMAIL = True   # Set False to only print emails in console
+
+if USE_REAL_EMAIL:
+    # Production / real email sending (SMTP)
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.gmail.com'             # Change if using another SMTP provider
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = 'marshallirem55@gmail.com'        # Replace with your email
+    EMAIL_HOST_PASSWORD = 'rxct uwhp jrek isgd'  # Replace with app password (Gmail 2FA)
+    DEFAULT_FROM_EMAIL = 'Soko Hub <noreply@sokohub.com>'
+#else:
+    # Development: print emails to console
+   # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    #DEFAULT_FROM_EMAIL = 'Soko Hub <noreply@sokohub.com>'

@@ -2,10 +2,46 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from django.urls import reverse
 from django.contrib.auth.views import LoginView
-from django.contrib.auth.decorators import login_required
 from .decorators import vendor_required, customer_required
-from .form import RegistrationForm
+from .form import RegistrationForm, TwoFactorForm
 from .decorators import vendor_required, customer_required 
+from products.models import Product
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.contrib.auth.views import (
+    PasswordResetView,
+    PasswordResetDoneView,
+    PasswordResetConfirmView,
+    PasswordResetCompleteView
+)
+from django.urls import reverse_lazy
+from .models import User
+import random
+from django.contrib import messages 
+
+
+
+
+class CustomPasswordResetView(PasswordResetView):
+    template_name = 'accounts/password_reset.html'
+    email_template_name = 'accounts/password_reset_email.html'
+    subject_template_name = 'accounts/password_reset_subject.txt'
+    success_url = reverse_lazy('password_reset_done')
+
+
+class CustomPasswordResetDoneView(PasswordResetDoneView):
+    template_name = 'accounts/password_reset_done.html'
+
+
+class CustomPasswordResetConfirmView(PasswordResetConfirmView):
+    template_name = 'accounts/password_reset_confirm.html'
+    success_url = reverse_lazy('password_reset_complete')
+
+
+class CustomPasswordResetCompleteView(PasswordResetCompleteView):
+    template_name = 'accounts/password_reset_complete.html'
+
+
+
 
 def register(request):
     if request.method == 'POST':
@@ -16,38 +52,114 @@ def register(request):
             if user.user_type == 'vendor':
                 return redirect('vendor_dashboard') 
             else:
-                return redirect('product_list') 
+                return redirect('home') 
     else:
         form = RegistrationForm()
     
     return render(request, 'accounts/register.html', {'form': form})
 
+otp_storage = {}
+
 class CustomLoginView(LoginView):
     """
-    Custom Login View that redirects users based on their user_type 
-    (vendor or customer) upon successful login.
+    Custom Login View that integrates 2FA (OTP) and redirects users 
+    based on their user_type (vendor or customer) upon successful login.
     """
+    template_name = 'accounts/login.html'
+
+    def form_valid(self, form):
+        """
+        Instead of logging in immediately, generate an OTP and
+        redirect to verification page.
+        """
+        user = form.get_user()
+        # Generate OTP
+        otp = f"{random.randint(100000, 999999)}"
+        otp_storage[user.username] = otp
+
+        # Send OTP via email
+        user.email_user(
+            subject="Your Soko Hub Login OTP",
+            message=f"Your login verification code is: {otp}",
+        )
+
+        # Store username in session
+        self.request.session['pre_2fa_user'] = user.username
+        return redirect('two_factor')
+
     def get_success_url(self):
+        """
+        Redirect users after successful login based on user_type.
+        Called after 2FA verification.
+        """
         url = self.get_redirect_url()
         if url:
-            # Handles the 'next' parameter redirection
             return url
-            
-        # Custom redirect logic based on user_type
+        
         if self.request.user.is_authenticated:
             if self.request.user.user_type == 'vendor':
                 return reverse('vendor_dashboard')
             else:
-                return reverse('product_list')
+                return reverse('home')
         
-        # Fallback if somehow not authenticated
         return super().get_success_url()
 
+def two_factor_view(request):
+    """
+    OTP verification page.
+    """
+    username = request.session.get('pre_2fa_user')
+    if not username:
+        return redirect('login')
 
+    if request.method == 'POST':
+        form = TwoFactorForm(request.POST)
+        if form.is_valid():
+            code = form.cleaned_data['code']
+            if otp_storage.get(username) == code:
+                user = User.objects.get(username=username)
+                from django.contrib.auth import login
+                login(request, user)
+                otp_storage.pop(username, None)
+                messages.success(request, "Login successful!")
+                return redirect('home')  # Redirect based on get_success_url after login
+            else:
+                messages.error(request, "Invalid verification code.")
+    else:
+        form = TwoFactorForm()
+
+    return render(request, 'accounts/two_factor.html', {'form': form})
 
 def home(request):
-    """Public home view."""
-    return render(request, 'accounts/home.html', {'title': 'Home'})
+    # Fetch all active products
+    products_list = Product.objects.filter(status='active')
+    
+    # Handle sorting
+    sort_by = request.GET.get('sort', '-created_at')
+    if sort_by == 'price_asc':
+        products_list = products_list.order_by('price')
+    elif sort_by == 'price_desc':
+        products_list = products_list.order_by('-price')
+    else:
+        products_list = products_list.order_by('-created_at')
+
+    # Pagination
+    paginator = Paginator(products_list, 12)
+    page_number = request.GET.get('page')
+    try:
+        products = paginator.page(page_number)
+    except PageNotAnInteger:
+        products = paginator.page(1)
+    except EmptyPage:
+        products = paginator.page(paginator.num_pages)
+
+    context = {
+        'products': products,
+        'current_sort': sort_by,
+        'title': 'Home',
+    }
+
+    return render(request, 'products/product_list.html', context)
 
 @vendor_required 
 def vendor_dashboard(request):

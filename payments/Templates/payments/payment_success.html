@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Payment Successful{% endblock %}
+
+{% block content %}
+<div class="container text-center mt-5">
+  <h2 class="text-success">Payment Successful </h2>
+  <p>Reference: {{ payment.reference }}</p>
+  <a href="{% url 'home' %}" class="btn btn-primary mt-3">Continue Shopping</a>
+</div>
+{% endblock %}
