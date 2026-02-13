@@ -62,53 +62,51 @@ otp_storage = {}
 
 class CustomLoginView(LoginView):
     """
-    Custom Login View that optionally supports OTP,
-    and redirects users based on user_type after login.
+    Custom Login View that integrates 2FA (OTP) and redirects users 
+    based on their user_type (vendor or customer) upon successful login.
     """
     template_name = 'accounts/login.html'
 
     def form_valid(self, form):
         """
-        Log in user and redirect based on role.
-        Optional: generate OTP if email backend is configured.
+        Instead of logging in immediately, generate an OTP and
+        redirect to verification page.
         """
         user = form.get_user()
+        # Generate OTP
+        otp = f"{random.randint(100000, 999999)}"
+        otp_storage[user.username] = otp
 
-        # Optional OTP generation (safe if email backend not configured)
-        try:
-            otp = f"{random.randint(100000, 999999)}"
-            otp_storage[user.username] = otp
-            # Try sending email, but fail silently if not configured
-            user.email_user(
-                subject="Your Soko Hub Login OTP",
-                message=f"Your login verification code is: {otp}",
-            )
-            self.request.session['pre_2fa_user'] = user.username
-            # Redirect to 2FA page
-            return redirect('two_factor')
-        except Exception:
-            # If email fails, log in immediately
-            from django.contrib.auth import login
-            login(self.request, user)
-            return self.get_success_url()
+        # Send OTP via email
+        user.email_user(
+            subject="Your Soko Hub Login OTP",
+            message=f"Your login verification code is: {otp}",
+        )
+
+        # Store username in session
+        self.request.session['pre_2fa_user'] = user.username
+        return redirect('two_factor')
 
     def get_success_url(self):
         """
-        Redirect users after login based on their role.
+        Redirect users after successful login based on user_type.
+        Called after 2FA verification.
         """
+        url = self.get_redirect_url()
+        if url:
+            return url
+        
         if self.request.user.is_authenticated:
             if self.request.user.user_type == 'vendor':
                 return reverse('vendor_dashboard')
-            elif self.request.user.user_type == 'customer':
-                return reverse('product_list')
             else:
                 return reverse('home')
+        
         return super().get_success_url()
-
 
 def two_factor_view(request):
     """
-    OTP verification page. Optional if OTP/email not used.
+    OTP verification page.
     """
     username = request.session.get('pre_2fa_user')
     if not username:

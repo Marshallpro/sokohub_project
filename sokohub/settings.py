@@ -168,8 +168,10 @@ if USE_REAL_EMAIL:
     EMAIL_PORT = 587
     EMAIL_USE_TLS = True
     EMAIL_HOST_USER = 'marshallirem55@gmail.com'        # Replace with your email
-    EMAIL_HOST_PASSWORD = 'rxct uwhp jrek isgd'  # Replace with app password (Gmail 2FA)
+    EMAIL_HOST_PASSWORD = 'tvcw nhpk gqtx kkey'  # Replace with app password (Gmail 2FA)
     DEFAULT_FROM_EMAIL = 'Soko Hub <noreply@sokohub.com>'
+
+    
 #else:
     # Development: print emails to console
    # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
