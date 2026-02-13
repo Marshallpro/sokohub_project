@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Products - {{ request.user.username }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0"> My Product Listings</h1>
+    {# 3. "Add New Product" button at top #}
+    <a href="{% url 'add_product' %}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Add New Product</a>
+</div>
+
+{# 6. Shows "No products yet" message if empty #}
+{% if products %}
+<div class="table-responsive">
+    {# 2. Displays in table format #}
+    <table class="table table-hover table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th scope="col">Image</th>
+                <th scope="col">Name</th>
+                <th scope="col">Price</th>
+                <th scope="col">Stock</th>
+                <th scope="col">Status</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                {# 4. Each product shows: image thumbnail #}
+                <td>
+                    {% if product.images.all %}
+    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" style="width: 50px; height: 50px; object-fit: cover;">
+{% else %}
+    [Image Not Available]
+{% endif %}
+
+                </td>
+                {# 4. name #}
+                <td>{{ product.name }}</td>
+                {# 4. price #}
+                <td>{{ product.price|floatformat:2 }}RWF</td>
+                {# 4. stock #}
+                <td>
+                    {% if product.stock == 0 %}
+                        {# 4. Stock quantity highlighted if zero (out of stock) #}
+                        <span class="badge bg-danger">Out of Stock</span>
+                    {% else %}
+                        {{ product.stock }}
+                    {% endif %}
+                </td>
+                {# 4. status #}
+                <td>
+                    <span class="badge {% if product.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">
+                        {{ product.status|title }}
+                    </span>
+                </td>
+                <td>
+                    <a href="{% url 'edit_product' product.id %}" class="btn btn-sm btn-outline-info">Edit</a>
+                    <a href="{% url 'delete_product' product.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-info text-center mt-5" role="alert">
+    You currently have no products listed. Click "Add New Product" to get started!
+</div>
+{% endif %}
+{% endblock %}
