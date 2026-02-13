@@ -122,7 +122,14 @@ def two_factor_view(request):
                 login(request, user)
                 otp_storage.pop(username, None)
                 messages.success(request, "Login successful!")
-                return redirect('home')  # Redirect based on get_success_url after login
+
+                # Redirect based on role
+                if user.user_type == 'vendor':
+                    return redirect('vendor_dashboard')
+                elif user.user_type == 'customer':
+                    return redirect('product_list')
+                else:
+                    return redirect('home')
             else:
                 messages.error(request, "Invalid verification code.")
     else:
